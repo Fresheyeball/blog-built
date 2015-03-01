@@ -7,10 +7,71 @@
     <atom:link href="http://blog.fresheyeball.com/feed.xml" rel="self" type="application/rss+xml" />
     
       <item>
+        <title>Unreal Haskell Motivation</title>
+        <description>&lt;p&gt;So here is the thing. I want to make games. Producing art and code are passions that are deeply personal, and have to be practiced and the zenith of your ability to be satisfying. And as we all should know, flow is extremely important. &lt;/p&gt;
+
+&lt;p&gt;After trying out several platforms, one stood out for the quality of its tooling and resulting games.&lt;/p&gt;
+
+&lt;h2 id=&quot;unreal-engine-4&quot;&gt;Unreal Engine 4&lt;/h2&gt;
+
+&lt;p&gt;In practicing UE4 flow was achieved in the level editor, and with simple blueprints; but not business logic. Math in blueprints is insane to read, as are (the equivalent of) switch statements and many other constructs. Blueprints seems to excel at interactive logic chains where the code is describing a response from the player, or performing actions in the world.&lt;/p&gt;
+
+&lt;p&gt;The alternative is C++, which I don&amp;rsquo;t know or have a desire to learn. Flow for me right now is in the purely functional languages and its painful to give that up. C++ also has a pretty high learning curve, so the likely-hood of achieving flow in C++ is more than a little far off.&lt;/p&gt;
+
+&lt;p&gt;So there is a hole, a place where business logic needs to live, and where I can have flow. Blueprints stay in the picture because they excel at specific types of logic so what are the properties of Blueprints? &lt;/p&gt;
+
+&lt;h2 id=&quot;blueprints&quot;&gt;Blueprints&lt;/h2&gt;
+
+&lt;p&gt;They do actually hold some functional characteristics:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Referential Transparency&lt;/li&gt;
+&lt;li&gt;Explicit Purity and Effects&lt;/li&gt;
+&lt;li&gt;Literals are Immutable&lt;/li&gt;
+&lt;li&gt;State has to be &amp;lsquo;unwrapped&amp;rsquo;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Referential Transparency in particular should make Haskell a good compliment. If there was a way to communicate between Haskell and Blueprints. &lt;/p&gt;
+
+&lt;p&gt;Hopefully that all doesn&amp;rsquo;t sound to crazy.&lt;/p&gt;
+
+&lt;h2 id=&quot;haskell-and-c++&quot;&gt;Haskell and C++&lt;/h2&gt;
+
+&lt;p&gt;The Glorious Glasgow Haskell Compiler uses GCC in the compilation process and and comes equipped with a mature Foreign Function Interface to communicate with other binaries. However its still rather painful to use if you intend to call C or C++ from Haskell. Calling Haskell from C++ works well though and can be done more cleanly. &lt;/p&gt;
+
+&lt;h2 id=&quot;blueprint-owns-(mostly)&quot;&gt;Blueprint Owns (Mostly)&lt;/h2&gt;
+
+&lt;p&gt;Realistically I wont be able to write complete and well designed bindings to Haskell for the Unreal C++ API. Its too large and undertaking. &lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;If you would want to do this, or think there is a way it could be feasible, please contact me.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;So a more feasible application structure would be to have Blueprints own actions on tick and the Engine API calls, while Haskell owns business logic and mathematics. &lt;/p&gt;
+
+&lt;p&gt;So something like this:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;Blueprints : The level is starting, whats the GameState?
+Haskell    : Here you go, a GameState
+Blueprints : Hey so X happened, whats the new GameState?
+Haskell    : From X? let me think... ok its got to be GameState
+Haskell    : Blueprints, respond to this update
+Blueprints : Ok, I will effect the world
+Blueprints : I am always effecting the world lol
+Blueprints : Hey can you do this math? I suck at math...
+Haskell    : Sure, here&amp;#39;s the answer
+Blueprints : You the best calculator ever Haskell
+Haskell    : Well you know how to do the real Effects!
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;It should work right? It could even be elegant. &lt;/p&gt;
+</description>
+        <pubDate>Tue, 03 Mar 2015 04:57:14 -0900</pubDate>
+        <link>http://blog.fresheyeball.com/integration/2015/03/03/haskell-to-blueprints/</link>
+        <guid isPermaLink="true">http://blog.fresheyeball.com/integration/2015/03/03/haskell-to-blueprints/</guid>
+      </item>
+    
+      <item>
         <title>Once more</title>
         <description>&lt;p&gt;So, I&amp;rsquo;m going to try this hideous blogging thing again. In the hopes that it will benefit someone, and the karma will come back around.&lt;/p&gt;
 
-&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-haskell&quot; data-lang=&quot;haskell&quot;&gt;&lt;span class=&quot;nf&quot;&gt;blog&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Human&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Learn&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Writing&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Either&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Boredom&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Disappointment&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-haskell&quot; data-lang=&quot;haskell&quot;&gt;&lt;span class=&quot;nf&quot;&gt;blog&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Human&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Learning&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Either&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Boredom&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Disappointment&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Writing&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 </description>
         <pubDate>Sat, 28 Feb 2015 04:57:14 -0900</pubDate>
         <link>http://blog.fresheyeball.com/pontification/2015/02/28/once-more/</link>
