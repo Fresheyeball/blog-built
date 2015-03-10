@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Unreal Haskell Motivation &#8211; fresheyeball</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="I don't want to write C++, or do business logic in Blueprints. Haskell does a great job with business logic, can run be embedded in C++ and should play well with Blueprints conceptually.">
+    <meta name="description" content="I don't want to write C++, or do business logic in Blueprints. Haskell does a great job with business logic, can be embedded in C++ and should play well with Blueprints conceptually.">
     <meta name="author" content="Isaac Shapira">
     <meta name="keywords" content="integration">
     <link rel="canonical" href="http://blog.fresheyeball.com/integration/2015/03/03/haskell-to-blueprints/">
@@ -28,23 +28,11 @@
     <meta property="og:site_name" content="fresheyeball">
 
     <!-- Icons -->
-    <link rel="apple-touch-icon" sizes="57x57" href="apple-touch-icon-57x57.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="apple-touch-icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="apple-touch-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="apple-touch-icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="60x60" href="apple-touch-icon-60x60.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="apple-touch-icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="apple-touch-icon-76x76.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="apple-touch-icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-180x180.png">
-    <link rel="icon" type="image/png" href="favicon-192x192.png" sizes="192x192">
-    <link rel="icon" type="image/png" href="favicon-160x160.png" sizes="160x160">
-    <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96">
-    <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16">
-    <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32">
+    <link rel="shortcut icon" href="favicon.ico?v=0" />
+    
 </head>
 
-<body class="animated fade-in-down">
+<body class="">
   <div class="site-wrap">
     <header class="site-header px2 px-responsive">
   <div class="mt2 wrap">
@@ -74,7 +62,7 @@
 </div>
 
 <article class="post-content">
-  <p>So here is the thing. I want to make games. </p>
+  <p>So here is the thing. I want to make games.</p>
 
 <p>After trying out several platforms, one stood out for the quality of its tooling and beautiful results.</p>
 
@@ -84,7 +72,7 @@
 
 <p>The alternative is C++, which I don&rsquo;t know or have a desire to learn. Flow for me right now is in the purely functional languages and its painful to give that up. C++ also has a pretty high learning curve, and the likely-hood of achieving flow in C++ is more than a little far off.</p>
 
-<p>So there is a hole, a place where business logic needs to live, and where I can have flow. Blueprints stay in the picture because they excel at specific types of logic so what are the properties of Blueprints? </p>
+<p>So there is a hole, a place where business logic needs to live, and where I can have flow. Blueprints stay in the picture because they excel at specific types of logic so what are the properties of Blueprints?</p>
 
 <h2 id="blueprints">Blueprints</h2>
 
@@ -97,21 +85,21 @@
 <li>State has to be &lsquo;unwrapped&rsquo;</li>
 </ul>
 
-<p>Referential Transparency in particular should make Haskell a good compliment. If there was a way to communicate between Haskell and Blueprints. </p>
+<p>Referential Transparency in particular should make Haskell a good compliment. If there was a way to communicate between Haskell and Blueprints.</p>
 
 <p>Hopefully that all doesn&rsquo;t sound to crazy.</p>
 
 <h2 id="haskell-and-c++">Haskell and C++</h2>
 
-<p>The Glorious Glasgow Haskell Compiler uses GCC in the compilation process and and comes equipped with a mature Foreign Function Interface to communicate with other binaries. However its still rather painful to use if you intend to call C or C++ from Haskell. Calling Haskell from C++ works well though and can be done more cleanly. </p>
+<p>The Glorious Glasgow Haskell Compiler uses GCC in the compilation process and and comes equipped with a mature Foreign Function Interface to communicate with other binaries. However its still rather painful to use if you intend to call C or C++ from Haskell. Calling Haskell from C++ works well though and can be done more cleanly.</p>
 
 <h2 id="blueprint-owns-(mostly)">Blueprint Owns (Mostly)</h2>
 
-<p>Realistically I wont be able to write complete and well designed bindings to Haskell for the Unreal C++ API. Its too large and undertaking. </p>
+<p>Realistically I wont be able to write complete and well designed bindings to Haskell for the Unreal C++ API. Its too large and undertaking.</p>
 
 <p><strong>If you would want to do this, or think there is a way it could be feasible, please contact me.</strong></p>
 
-<p>So a more feasible application structure would be to have Blueprints own actions on tick and the Engine API calls, while Haskell owns business logic and mathematics. </p>
+<p>So a more feasible application structure would be to have Blueprints own actions on tick and the Engine API calls, while Haskell owns business logic and mathematics.</p>
 
 <p>So something like this:</p>
 <div class="highlight"><pre><code class="language-text" data-lang="text">Blueprints : The level is starting, whats the GameState?
@@ -126,7 +114,7 @@ Haskell    : Sure, here&#39;s the answer
 Blueprints : You the best calculator ever Haskell
 Haskell    : Well you know how to do the real Effects!
 </code></pre></div>
-<p>It should work right? It could even be elegant. </p>
+<p>It should work right? It could even be elegant.</p>
 
 </article>
 

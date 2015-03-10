@@ -7,8 +7,136 @@
     <atom:link href="http://blog.fresheyeball.com/feed.xml" rel="self" type="application/rss+xml" />
     
       <item>
+        <title>Basic Structure</title>
+        <description>&lt;p&gt;Filthy filthy filthy, thats how this is going to work at first. The goal here is to get Unreal Haskell to trigger computation in Haskell from Blueprints, with glue coming from the plugin.&lt;/p&gt;
+
+&lt;h2 id=&quot;just-haskell-and-visual-c++&quot;&gt;Just Haskell and Visual C++&lt;/h2&gt;
+
+&lt;p&gt;Before getting to deep, I thought it was worth it to do a trail run and get Haskell to embed in Visual C++. You can see the results of that exercise here:&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/Fresheyeball/haskell-visual-cpp-minimal&quot;&gt;github/fresheyeball/haskell-visual-cpp-minimal&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Because &lt;code&gt;Main&lt;/code&gt; will be in C++, the Spineless Tagless Graph Machine (STG (the thing that executes Haskell code)) must be started and stopped inside C++. To do this there are a few challenges to overcome:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;GHC comes bundled with GCC, so compiled Haskell binaries cannot be seamlessly included by Visual C++&lt;/li&gt;
+&lt;li&gt;Haskell&amp;rsquo;s FFI is oriented around C not C++ and the specific Start and Stop functions can&amp;rsquo;t be included in C++&lt;/li&gt;
+&lt;li&gt;Documentation is sparse&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;luckily-resolving-these-is-not-overly-complicated&quot;&gt;Luckily resolving these is not overly complicated&lt;/h3&gt;
+
+&lt;p&gt;The GCC vs Visual C++ compiler gap can be resolved by packaging GHC/GCC binaries inside a &lt;code&gt;.DLL&lt;/code&gt; with a &lt;code&gt;.Lib&lt;/code&gt; and including the .Lib as an &amp;ldquo;Additional Dependency&amp;rdquo; in Visual Studio.&lt;/p&gt;
+
+&lt;p&gt;Getting the Start and Stop functions for STG is resolved by producing a simple C file that can be compiled together with the Haskell Binaries in producing the DLL. You can find that file &lt;a href=&quot;https://github.com/Fresheyeball/haskell-visual-cpp-minimal/blob/master/CPPHaskellSimple/HsStartEnd.c&quot;&gt;here&lt;/a&gt;. Various versions of this file exist around the interwebs, I&amp;rsquo;ve no idea who to credit with its creation.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C&quot; data-lang=&quot;C&quot;&gt;&lt;span class=&quot;cp&quot;&gt;#include &amp;lt;Rts.h&amp;gt;&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;HsStart&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+   &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;argc&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+   &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;ghcDll&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// argv must end with NULL&lt;/span&gt;
+
+   &lt;span class=&quot;c1&quot;&gt;// Initialize Haskell runtime&lt;/span&gt;
+   &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;**&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;args&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;argv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+   &lt;span class=&quot;n&quot;&gt;hs_init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;argc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;HsEnd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+   &lt;span class=&quot;n&quot;&gt;hs_exit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Its now possible to call Haskell from Visual C++, starting and stopping STG with an &lt;code&gt;extern&lt;/code&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-C++&quot; data-lang=&quot;C++&quot;&gt;&lt;span class=&quot;k&quot;&gt;extern&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;C&amp;quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;HsStart&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+  &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;HsEnd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now all that is needed is to include the Header file outputted by GHC and call the functions outputted from Haskell &lt;code&gt;ccall&lt;/code&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-haskell&quot; data-lang=&quot;haskell&quot;&gt;&lt;span class=&quot;nf&quot;&gt;foreign&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;export&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ccall&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;kr&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2 id=&quot;plugin-structure&quot;&gt;Plugin Structure&lt;/h2&gt;
+
+&lt;p&gt;The basic structure of an Unreal Plugin is well templated &lt;a href=&quot;https://wiki.unrealengine.com/Plugin,_Functional_Code_Template_For_You&quot;&gt;here&lt;/a&gt; by the immortal and mighty &lt;a href=&quot;http://evernewjoy.net/&quot;&gt;Rama&lt;/a&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-haskell&quot; data-lang=&quot;haskell&quot;&gt;&lt;span class=&quot;kt&quot;&gt;Project&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Root&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Binaries&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Build&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Config&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Content&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Intermediate&lt;/span&gt; 
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Plugins&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;◄&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;-- Create this folder&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;└─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;MyPlugin&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;◄&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;-- Then just drop in your plugin&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Binaries&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Resources&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Source&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Private&lt;/span&gt; 
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Public&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;└─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;MyPlugin&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Build&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cs&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;◄&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;-- This runs before C++ is compiled&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;└─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;MyPlugin&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uplugin&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;◄&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;-- Basic plugin config&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Saved&lt;/span&gt; 
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Source&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;MyProject&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sdf&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;MyProject&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sln&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;└─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;MyProject&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uproject&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;And it is a folder as in a directory as in it is &lt;strong&gt;not&lt;/strong&gt; a Visual Studio filter (a weird thingy that looks like a folder).&lt;/p&gt;
+
+&lt;h2 id=&quot;unreal-build-tool&quot;&gt;Unreal Build Tool&lt;/h2&gt;
+
+&lt;p&gt;So Unreal Engine uses a build system called the Unreal Build Tool (UBT) which runs on Mono in C#. It seems to handle linking and some code generation, orchestrating the build process until the Unreal Editor launches and takes over from there. I&amp;rsquo;m sure it does much more than that, but for wiring in Haskell thats all that should be necessary. &lt;/p&gt;
+
+&lt;p&gt;UBT build files are named &lt;code&gt;*.Build.cs&lt;/code&gt;. To get Haskell compilation to work with UBT it just needs to spawn GHC compilation and DLL packaging from inside of the plugin&amp;rsquo;s &lt;code&gt;Build.cs&lt;/code&gt;. UBT will also grab anything that looks even remotely related to C in the &lt;code&gt;Source&lt;/code&gt; folder by convention, so packaged DLLs, Headers and such will need to go there, but in the case of Unreal Haskell, not the source code. &lt;/p&gt;
+
+&lt;p&gt;This is because the plugin source will need to contain files like &lt;code&gt;HsStartEnd.c&lt;/code&gt; which are intended for GHC compilation not UBT slurpage. As well the binaries we hand UBT should contain logic that ultimately comes from the consumer, not the plugin itself.&lt;/p&gt;
+
+&lt;h2 id=&quot;so-far..&quot;&gt;So far..&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-haskell&quot; data-lang=&quot;haskell&quot;&gt;&lt;span class=&quot;kt&quot;&gt;Project&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Root&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Binaries&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Build&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Config&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Content&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Intermediate&lt;/span&gt; 
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Haskell&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;◄&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;-- Plugin consumer code goes here&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Plugins&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;└─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UnrealHaskell&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Binaries&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Resources&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;PackageGHC&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;◄&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;-- Stuff in here will grab the consumer code and build&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Source&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Private&lt;/span&gt; 
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Public&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;◄&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;-- Resulting binaries C++ and Headers show up here&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  &lt;span class=&quot;err&quot;&gt;└─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UnrealHaskell&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;Build&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;cs&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;◄&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;-- Starts the Compilation&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;  
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;     &lt;span class=&quot;err&quot;&gt;└─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;UnrealHaskell&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uplugin&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Saved&lt;/span&gt; 
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Source&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;│&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;MyProject&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sdf&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;├─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;MyProject&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sln&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;└─&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;MyProject&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;uproject&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Once this is proven out round trip, its time to do some code generation and have glue written at build time.&lt;/p&gt;
+</description>
+        <pubDate>Mon, 09 Mar 2015 07:57:14 -0600</pubDate>
+        <link>http://blog.fresheyeball.com/integration/2015/03/09/basic-structure/</link>
+        <guid isPermaLink="true">http://blog.fresheyeball.com/integration/2015/03/09/basic-structure/</guid>
+      </item>
+    
+      <item>
         <title>Unreal Haskell Motivation</title>
-        <description>&lt;p&gt;So here is the thing. I want to make games. &lt;/p&gt;
+        <description>&lt;p&gt;So here is the thing. I want to make games.&lt;/p&gt;
 
 &lt;p&gt;After trying out several platforms, one stood out for the quality of its tooling and beautiful results.&lt;/p&gt;
 
@@ -18,7 +146,7 @@
 
 &lt;p&gt;The alternative is C++, which I don&amp;rsquo;t know or have a desire to learn. Flow for me right now is in the purely functional languages and its painful to give that up. C++ also has a pretty high learning curve, and the likely-hood of achieving flow in C++ is more than a little far off.&lt;/p&gt;
 
-&lt;p&gt;So there is a hole, a place where business logic needs to live, and where I can have flow. Blueprints stay in the picture because they excel at specific types of logic so what are the properties of Blueprints? &lt;/p&gt;
+&lt;p&gt;So there is a hole, a place where business logic needs to live, and where I can have flow. Blueprints stay in the picture because they excel at specific types of logic so what are the properties of Blueprints?&lt;/p&gt;
 
 &lt;h2 id=&quot;blueprints&quot;&gt;Blueprints&lt;/h2&gt;
 
@@ -31,21 +159,21 @@
 &lt;li&gt;State has to be &amp;lsquo;unwrapped&amp;rsquo;&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;Referential Transparency in particular should make Haskell a good compliment. If there was a way to communicate between Haskell and Blueprints. &lt;/p&gt;
+&lt;p&gt;Referential Transparency in particular should make Haskell a good compliment. If there was a way to communicate between Haskell and Blueprints.&lt;/p&gt;
 
 &lt;p&gt;Hopefully that all doesn&amp;rsquo;t sound to crazy.&lt;/p&gt;
 
 &lt;h2 id=&quot;haskell-and-c++&quot;&gt;Haskell and C++&lt;/h2&gt;
 
-&lt;p&gt;The Glorious Glasgow Haskell Compiler uses GCC in the compilation process and and comes equipped with a mature Foreign Function Interface to communicate with other binaries. However its still rather painful to use if you intend to call C or C++ from Haskell. Calling Haskell from C++ works well though and can be done more cleanly. &lt;/p&gt;
+&lt;p&gt;The Glorious Glasgow Haskell Compiler uses GCC in the compilation process and and comes equipped with a mature Foreign Function Interface to communicate with other binaries. However its still rather painful to use if you intend to call C or C++ from Haskell. Calling Haskell from C++ works well though and can be done more cleanly.&lt;/p&gt;
 
 &lt;h2 id=&quot;blueprint-owns-(mostly)&quot;&gt;Blueprint Owns (Mostly)&lt;/h2&gt;
 
-&lt;p&gt;Realistically I wont be able to write complete and well designed bindings to Haskell for the Unreal C++ API. Its too large and undertaking. &lt;/p&gt;
+&lt;p&gt;Realistically I wont be able to write complete and well designed bindings to Haskell for the Unreal C++ API. Its too large and undertaking.&lt;/p&gt;
 
 &lt;p&gt;&lt;strong&gt;If you would want to do this, or think there is a way it could be feasible, please contact me.&lt;/strong&gt;&lt;/p&gt;
 
-&lt;p&gt;So a more feasible application structure would be to have Blueprints own actions on tick and the Engine API calls, while Haskell owns business logic and mathematics. &lt;/p&gt;
+&lt;p&gt;So a more feasible application structure would be to have Blueprints own actions on tick and the Engine API calls, while Haskell owns business logic and mathematics.&lt;/p&gt;
 
 &lt;p&gt;So something like this:&lt;/p&gt;
 &lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;Blueprints : The level is starting, whats the GameState?
@@ -60,9 +188,9 @@ Haskell    : Sure, here&amp;#39;s the answer
 Blueprints : You the best calculator ever Haskell
 Haskell    : Well you know how to do the real Effects!
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-&lt;p&gt;It should work right? It could even be elegant. &lt;/p&gt;
+&lt;p&gt;It should work right? It could even be elegant.&lt;/p&gt;
 </description>
-        <pubDate>Tue, 03 Mar 2015 04:57:14 -0900</pubDate>
+        <pubDate>Tue, 03 Mar 2015 06:57:14 -0700</pubDate>
         <link>http://blog.fresheyeball.com/integration/2015/03/03/haskell-to-blueprints/</link>
         <guid isPermaLink="true">http://blog.fresheyeball.com/integration/2015/03/03/haskell-to-blueprints/</guid>
       </item>
@@ -73,7 +201,7 @@ Haskell    : Well you know how to do the real Effects!
 
 &lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-haskell&quot; data-lang=&quot;haskell&quot;&gt;&lt;span class=&quot;nf&quot;&gt;blog&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;::&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Human&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Learning&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Either&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Boredom&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Disappointment&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Maybe&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;Writing&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 </description>
-        <pubDate>Sat, 28 Feb 2015 04:57:14 -0900</pubDate>
+        <pubDate>Sat, 28 Feb 2015 06:57:14 -0700</pubDate>
         <link>http://blog.fresheyeball.com/pontification/2015/02/28/once-more/</link>
         <guid isPermaLink="true">http://blog.fresheyeball.com/pontification/2015/02/28/once-more/</guid>
       </item>
